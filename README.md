@@ -16,7 +16,9 @@ Git.
 ```bash
 $  git  clone  git@github.com:raphael-dias/image-auto-sender-backend.git
 
-$  npm  i  -g  @nestjs/cli && npm  i  @prisma/client
+$  npm  i  -g  @nestjs/cli
+
+$npm  i  @prisma/client
 
 $ npm i -D ts-node typescript @types/node
 ```
