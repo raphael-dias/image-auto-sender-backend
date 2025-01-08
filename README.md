@@ -20,7 +20,7 @@ $  npm  i  -g  @nestjs/cli
 
 $  npm  i  @prisma/client
 
-$ npm i -D ts-node typescript @types/node
+$  npm i -D ts-node typescript @types/node
 ```
 For dependencies install
 ```bash
@@ -44,7 +44,7 @@ $  npm  run  start
 
 **Docker UP**
 ```bash
-$  npm  eun docker:up
+$  npm  run docker:up
 ```
 **Docker Down**
 ```bash
