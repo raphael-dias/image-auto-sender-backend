@@ -18,28 +18,23 @@ $  git  clone  git@github.com:raphael-dias/image-auto-sender-backend.git
 
 $  npm  i  -g  @nestjs/cli
 
-$  npm  i  @prisma/client
-
-$  npm i -D ts-node typescript @types/node
 ```
 For dependencies install
 ```bash
 $  npm  install  
 ```
-```bash
-$  npm  install  -D  ts-node
-```
 And to configure the environment run this command
 ```bash
-$  npm  run  start
+$  npm  run  start:dev
+
+$  npm  run docker:up 
+
+$  npx  prisma  migrate  dev  --name  init
+
+$  npm run seed
+
 ```
-
-# Swagger
-
-[Swagger](http://localhost:3000/api) 
-
 # Useful commands
-
 ### Docker 
 
 **Docker UP**
@@ -63,6 +58,10 @@ $ npm run seed
 ```bash
 $ prisma pull
 ```
+# Swagger
+
+[Swagger](http://localhost:3000/api) 
+
 
 ## Compile and run the project
 ```bash

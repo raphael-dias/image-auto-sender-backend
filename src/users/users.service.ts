@@ -3,12 +3,13 @@ import { generateUUID } from '../utils/uuid.generator';
 import { generateKeys } from '../utils/keys.generator';
 import { encrypt } from '../utils/key.encrypt';
 import { decrypt } from '../utils/key.decrypt';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class TestService {
   async test(): Promise<string> {
     const passphrase = process.env.PASSWORD;
-    // // Function to generate UUID
+    // Function to generate UUID
     const uuid = generateUUID();
     console.log(uuid);
 
@@ -25,12 +26,12 @@ export class TestService {
       console.log(decriptedKey);
 
       if (decriptedKey === uuid) {
-        console.log('A validação foi bem-sucedida!');
+        console.log('Validation was successful!');
       } else {
-        console.log('A validação falhou.');
+        console.log('Validation failed.');
       }
     } catch (error) {
-      console.error('Erro ao executar consulta', error.message);
+      console.error('Error executing query', error.message);
       throw new Error(`Error processing keys: ${error.message}`);
     }
 
@@ -38,7 +39,41 @@ export class TestService {
   }
 }
 export class UserService {
-  getUser(): any {
-    return 'SUCCESS';
+  constructor() {}
+  prismadb = new PrismaClient();
+  async getUser(id?: string): Promise<any> {
+    if (id) {
+      const isExist = await this.prismadb.user.findUnique({
+        where: {
+          user_id: id,
+        },
+      });
+
+      if (isExist && isExist.user_id) {
+        return 'User already exists';
+      }
+
+      if (!isExist || !isExist.user_id) {
+        return 'User not found';
+      }
+    }
+    const uuid = generateUUID();
+    const { publicKey, privateKey } = generateKeys();
+    console.log(uuid, publicKey, privateKey);
+    try {
+      await this.prismadb.user.create({
+        data: {
+          public_key: publicKey,
+          private_key: privateKey,
+          favs: [],
+          user_id: uuid,
+          categories: [],
+        },
+      });
+      return { uuid, publicKey };
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
   }
 }
