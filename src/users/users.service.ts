@@ -44,12 +44,6 @@ export class UserService {
 
   //Get user data
   async getUser(id: string): Promise<any> {
-    const a = await this.prisma.user.findUnique({
-      where: {
-        user_id: id,
-      },
-    });
-    console.log(a);
     try {
       const isExist = await this.prisma.user.findUnique({
         where: {
