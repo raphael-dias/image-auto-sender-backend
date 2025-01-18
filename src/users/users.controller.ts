@@ -44,6 +44,7 @@ export class UsersController {
   ): Promise<any> {
     return this.userServices.deleteUserFavsAndCategories(id, deleteData);
   }
+
   @Patch('favs/:id')
   @ApiParam({ name: 'id', type: String, description: 'User ID' })
   @ApiBody({
@@ -64,6 +65,7 @@ export class UsersController {
   ): Promise<any> {
     return this.userServices.updateUserFavsAndCategories(id, updateData);
   }
+
   @Get('test')
   test() {
     return 'SUCCESS';
