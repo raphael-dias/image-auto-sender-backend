@@ -129,14 +129,21 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    // Merges existing favs and categories with the new ones, ensuring no duplicates.
-    const updatedFavs = Array.from(
-      new Set([...(user.favs || []), ...(updateData.favs || [])]),
-    );
-    const updatedCategories = Array.from(
-      new Set([...(user.categories || []), ...(updateData.categories || [])]),
-    );
+    // Adiciona favoritos novos sem duplicar
+    const updatedFavs = [
+      ...user.favs,
+      ...(updateData.favs?.filter((fav) => !user.favs.includes(fav)) || []),
+    ];
 
+    // Adiciona categorias novas sem duplicar
+    const updatedCategories = [
+      ...user.categories,
+      ...(updateData.categories?.filter(
+        (category) => !user.categories.includes(category),
+      ) || []),
+    ];
+
+    // Atualiza o usuário no banco de dados
     return this.prisma.user.update({
       where: {
         user_id: id,
