@@ -63,7 +63,6 @@ export class UserService {
   async createUser() {
     const uuid = generateUUID();
     const { publicKey, privateKey } = generateKeys();
-    console.log(uuid, publicKey, privateKey);
     try {
       await this.prisma.user.create({
         data: {
