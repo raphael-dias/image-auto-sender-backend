@@ -75,7 +75,6 @@ export class UserService {
       });
       return { uuid, publicKey };
     } catch (error) {
-      console.error('Error creating user:', error);
       throw error;
     }
   }
@@ -128,13 +127,11 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    // Adiciona favoritos novos sem duplicar
     const updatedFavs = [
       ...user.favs,
       ...(updateData.favs?.filter((fav) => !user.favs.includes(fav)) || []),
     ];
 
-    // Adiciona categorias novas sem duplicar
     const updatedCategories = [
       ...user.categories,
       ...(updateData.categories?.filter(
@@ -142,7 +139,6 @@ export class UserService {
       ) || []),
     ];
 
-    // Atualiza o usuário no banco de dados
     return this.prisma.user.update({
       where: {
         user_id: id,

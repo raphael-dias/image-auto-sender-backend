@@ -2,6 +2,7 @@ import { Test } from '@nestjs/testing';
 import { UsersController } from '../users.controller';
 import { UserService } from '../users.service';
 import { UserDto } from '../user.dto';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 const id = 1;
 const user_id = '62860345-4488-42c4-9c8b-4289f4273660';
@@ -11,8 +12,9 @@ const created_at = '2025-01-08 16:03:51.556';
 const favs = ['1', '2', '3'];
 const categories = ['1', '2'];
 
-describe('User Controller', () => {
+describe('UserController', () => {
   let controller: UsersController;
+  let userService: UserService;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
@@ -71,15 +73,16 @@ describe('User Controller', () => {
     }).compile();
 
     controller = module.get<UsersController>(UsersController);
+    userService = module.get<UserService>(UserService);
   });
 
-  describe('createUser', () => {
+  describe('UserController', () => {
     it('should be defined', () => {
       expect(controller.createUser).toBeDefined();
     });
   });
 
-  describe('getUser', () => {
+  describe('UserController - getUser', () => {
     it('should get a user by id', async () => {
       const result = await controller.getUser(user_id);
       expect(result).toEqual([
@@ -95,7 +98,25 @@ describe('User Controller', () => {
       ]);
     });
   });
-  describe('createUser', () => {
+  describe('UserController - getUser - Error', () => {
+    it('should return a error', async () => {
+      jest
+        .spyOn(userService, 'getUser')
+        .mockRejectedValue(
+          new HttpException('Error creating user', HttpStatus.BAD_REQUEST),
+        );
+      try {
+        await controller.getUser('Error');
+      } catch (error) {
+        expect(error).toBeInstanceOf(HttpException);
+        expect(error.message).toBe('Error creating user');
+        expect(error.getStatus()).toBe(HttpStatus.BAD_REQUEST);
+      }
+
+      expect(userService.getUser).toHaveBeenCalled();
+    });
+  });
+  describe('UserController - createUser', () => {
     it('should create a new user', async () => {
       const result = await controller.createUser();
       expect(result).toEqual({
@@ -104,7 +125,7 @@ describe('User Controller', () => {
       });
     });
   });
-  describe('updateUserFavsAndCategories', () => {
+  describe('UserController - updateUserFavsAndCategories', () => {
     it('should update a user favs and categories', async () => {
       const result = await controller.updateUserFavsAndCategories(user_id, {
         favs: ['4'],
@@ -115,7 +136,7 @@ describe('User Controller', () => {
       });
     });
   });
-  describe('deleteUserFavsAndCategories', () => {
+  describe('UserController - deleteUserFavsAndCategories', () => {
     it('should remove a favorite from the user favs', async () => {
       const result = await controller.deleteUserFavsAndCategories(user_id, {
         favs: ['1'],
