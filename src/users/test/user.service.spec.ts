@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from '../users.service'; // Ajuste o caminho conforme necessário
 import { PrismaClient } from '@prisma/client';
 import { generateKeys } from '../../utils/keys.generator';
+import { HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 
 // import { NotFoundException } from '@nestjs/common';
 
@@ -9,16 +10,30 @@ jest.mock('../../utils/keys.generator', () => ({
   generateKeys: jest.fn(), // Mock da função
 }));
 
-// jest.mock('@prisma/client', () => {
-//   return {
-//     PrismaClient: jest.fn().mockImplementation(() => ({
-//       user: {
-//         findUnique: jest.fn(),
-//         create: jest.fn(),
-//       },
-//     })),
-//   };
-// });
+const mockUser = {
+  id: 1,
+  user_id: '62860345-4488-42c4-9c8b-4289f4273660',
+  public_key: `-----BEGIN PUBLIC KEY----- ... -----END PUBLIC KEY-----`,
+  private_key: `-----BEGIN ENCRYPTED PRIVATE KEY----- ... -----END ENCRYPTED PRIVATE KEY-----`,
+  favs: ['1', '2'],
+  categories: ['1', '2'],
+  created_at: new Date('2025-01-08 16:03:51.556'),
+};
+
+const deleteData = {
+  favs: ['1'],
+  categories: ['1'],
+};
+
+const updatedUser = {
+  id: 1,
+  user_id: mockUser.user_id,
+  public_key: mockUser.public_key,
+  private_key: mockUser.private_key,
+  created_at: mockUser.created_at,
+  favs: ['2'],
+  categories: ['2'],
+};
 
 const mockPrismaClient = {
   user: {
@@ -31,15 +46,6 @@ const mockPrismaClient = {
 describe('UserService', () => {
   let userService: UserService;
   let prisma: PrismaClient;
-  const mockUser = {
-    id: 1,
-    user_id: '62860345-4488-42c4-9c8b-4289f4273660',
-    public_key: `-----BEGIN PUBLIC KEY----- ... -----END PUBLIC KEY-----`,
-    private_key: `-----BEGIN ENCRYPTED PRIVATE KEY----- ... -----END ENCRYPTED PRIVATE KEY-----`,
-    favs: ['1', '2'],
-    categories: ['1', '2'],
-    created_at: new Date('2025-01-08 16:03:51.556'),
-  };
 
   beforeEach(async () => {
     process.env.PASSWORD = 'mock-passphrase';
@@ -51,7 +57,7 @@ describe('UserService', () => {
     prisma = module.get<PrismaClient>(PrismaClient);
   });
 
-  it('should return user data when user exists', async () => {
+  it('UserService - getUser', async () => {
     jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser);
 
     const result = await userService.getUser(mockUser.user_id);
@@ -64,14 +70,14 @@ describe('UserService', () => {
     });
   });
 
-  it('should return "User not found" when user does not exist', async () => {
+  it('UserService - getUser - error', async () => {
     jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(null);
 
     const result = await userService.getUser('non-existent-id');
     expect(result).toBe('User not found');
   });
 
-  describe('UserService Create', () => {
+  describe('UserService - Create', () => {
     it('should create a user successfully', async () => {
       const mockPublicKey = mockUser.private_key;
       const mockPrivateKey = mockUser.private_key;
@@ -98,118 +104,141 @@ describe('UserService', () => {
         },
       });
     });
-    //
-    //
-    //
-    it('should update user favs and categories when user exists', async () => {
-      const deleteData = {
-        favs: ['1'],
-        categories: ['1'],
-      };
+    describe('UserService - Create - Error ', () => {
+      it('should return a error', async () => {
+        jest
+          .spyOn(userService, 'createUser')
+          .mockRejectedValue(
+            new HttpException('Error creating user', HttpStatus.BAD_REQUEST),
+          );
+        try {
+          await userService.createUser();
+        } catch (error) {
+          expect(error).toBeInstanceOf(HttpException);
+          expect(error.message).toBe('Error creating user');
+          expect(error.getStatus()).toBe(HttpStatus.BAD_REQUEST);
+        }
 
-      const updatedUser = {
-        id: 1,
-        user_id: mockUser.user_id,
-        public_key: mockUser.public_key,
-        private_key: mockUser.private_key,
-        created_at: mockUser.created_at,
-        favs: ['2'],
-        categories: ['2'],
-      };
+        expect(userService.createUser).toHaveBeenCalled();
+      });
+    });
 
-      jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser);
+    describe('UserService - Create - Error 2 ', () => {
+      it('should return a error', async () => {
+        const mockError = new Error('Database connection error');
+        jest.spyOn(prisma.user, 'create').mockRejectedValue(mockError);
 
-      jest.spyOn(prisma.user, 'update').mockResolvedValue(updatedUser);
+        try {
+          await userService.createUser();
+        } catch (error) {
+          expect(error).toBe(mockError);
+          expect(error.message).toBe('Database connection error');
+        }
+        expect(prisma.user.create).toHaveBeenCalled();
+      });
+    });
 
-      const result = await userService.deleteUserFavsAndCategories(
-        mockUser.user_id,
-        deleteData,
-      );
+    describe('UserService - deleteUserFavsAndCategories - Error ', () => {
+      it('should return a error', async () => {
+        jest
+          .spyOn(userService, 'deleteUserFavsAndCategories')
+          .mockRejectedValue(
+            new HttpException('Error creating user', HttpStatus.BAD_REQUEST),
+          );
+        try {
+          await userService.deleteUserFavsAndCategories(
+            mockUser.user_id,
+            deleteData,
+          );
+        } catch (error) {
+          expect(error).toBeInstanceOf(HttpException);
+          expect(error.message).toBe('Error creating user');
+          expect(error.getStatus()).toBe(HttpStatus.BAD_REQUEST);
+        }
 
-      expect(result).toEqual(updatedUser);
+        expect(userService.deleteUserFavsAndCategories).toHaveBeenCalled();
+      });
+    });
 
-      // Verifique se a função update foi chamada corretamente
+    describe('UserService - deleteUserFavsAndCategories', () => {
+      it('should update user favs and categories when user exists', async () => {
+        jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser);
 
-      //   // Verifique se o findUnique foi chamado corretamente
-      //   expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
-      //     where: { user_id: mockUser.user_id },
-      //   });
+        jest.spyOn(prisma.user, 'update').mockResolvedValue(updatedUser);
 
-      //   // Verifique se a atualização foi chamada corretamente
-      //   expect(mockPrismaClient.user.update).toHaveBeenCalledWith({
-      //     where: { user_id: mockUser.user_id },
-      //     data: {
-      //       favs: ['2', '3'],
-      //       categories: ['1'],
-      //     },
-      //   });
-      // });
+        const result = await userService.deleteUserFavsAndCategories(
+          mockUser.user_id,
+          deleteData,
+        );
+        expect(result).toEqual(updatedUser);
+      });
+    });
 
-      // it('should throw NotFoundException if user not found', async () => {
-      //   const userId = 'non-existing-user-id';
-      //   const deleteData = {
-      //     favs: ['1'],
-      //     categories: ['2'],
-      //   };
+    describe('UserService - deleteUserFavsAndCategories', () => {
+      it('should call a NotFoundException if user is not found', async () => {
+        jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(null);
 
-      //   // Mockando o retorno do findUnique para retornar null (usuário não encontrado)
-      //   jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(null);
+        const deleteData = { favs: ['fav1'], categories: ['cat1'] };
 
-      //   // Assegure que uma exceção seja lançada
-      //   await expect(
-      //     userService.deleteUserFavsAndCategories(userId, deleteData),
-      //   ).rejects.toThrowError(new NotFoundException('User not found'));
+        await expect(
+          userService.deleteUserFavsAndCategories('invalid-id', deleteData),
+        ).rejects.toThrow(NotFoundException);
 
-      //   // Verifique se o findUnique foi chamado corretamente
-      //   expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
-      //     where: { user_id: userId },
-      //   });
+        expect(prisma.user.findUnique).toHaveBeenCalledWith({
+          where: { user_id: 'invalid-id' },
+        });
+      });
+    });
 
-      //   // Não deve chamar a função update, já que o usuário não foi encontrado
-      //   expect(mockPrismaClient.user.update).not.toHaveBeenCalled();
-      // });
+    describe('UserService - updateUserFavsAndCategories', () => {
+      it('should throw NotFoundException if user is not found', async () => {
+        jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(null);
 
-      // it('should return empty arrays if no favs or categories exist to delete', async () => {
-      //   const userId = '62860345-4488-42c4-9c8b-4289f4273660';
-      //   const deleteData = {
-      //     favs: ['5'], // Favoritos não existentes
-      //     categories: ['3'], // Categorias não existentes
-      //   };
+        const updateData = { favs: ['newFav'], categories: ['newCategory'] };
 
-      //   const updatedUser = {
-      //     user_id: userId,
-      //     favs: ['1', '2', '3'], // Não há favoritos a serem excluídos
-      //     categories: ['1', '2'], // Não há categorias a serem excluídas
-      //   };
+        await expect(
+          userService.updateUserFavsAndCategories('invalid-id', updateData),
+        ).rejects.toThrow(NotFoundException);
 
-      //   // Mockando o retorno do findUnique
-      //   jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser);
+        expect(prisma.user.findUnique).toHaveBeenCalledWith({
+          where: { user_id: 'invalid-id' },
+        });
+      });
+      it('should update favs and categories correctly for an existing user', async () => {
+        jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser);
 
-      //   // Mockando a atualização do usuário
-      //   jest.spyOn(prisma.user, 'findUnique').mockResolvedValue(mockUser);
+        const updateData = {
+          favs: ['3', '4'],
+          categories: ['3', '4'],
+        };
 
-      //   // Chame a função que você quer testar
-      //   const result = await userService.deleteUserFavsAndCategories(
-      //     userId,
-      //     deleteData,
-      //   );
+        jest.spyOn(prisma.user, 'update').mockResolvedValue({
+          ...updatedUser,
+        });
 
-      //   // Assegure que o resultado seja o esperado
-      //   expect(result).toEqual(updatedUser);
+        const result = await userService.updateUserFavsAndCategories(
+          '123',
+          updateData,
+        );
 
-      //   // Verifique se o findUnique foi chamado corretamente
-      //   expect(mockPrismaClient.user.findUnique).toHaveBeenCalledWith({
-      //     where: { user_id: userId },
-      //   });
+        expect(prisma.user.findUnique).toHaveBeenCalledWith({
+          where: { user_id: '123' },
+        });
 
-      //   // Verifique se a atualização foi chamada corretamente
-      //   expect(mockPrismaClient.user.update).toHaveBeenCalledWith({
-      //     where: { user_id: userId },
-      //     data: {
-      //       favs: ['1', '2', '3'],
-      //       categories: ['1', '2'],
-      //     },
-      //   });
+        expect(prisma.user.update).toHaveBeenCalledWith({
+          where: { user_id: '123' },
+          data: {
+            favs: ['1', '2', '3', '4'],
+            categories: ['1', '2', '3', '4'],
+          },
+        });
+
+        expect(result).toEqual({
+          ...updatedUser,
+          favs: ['2'],
+          categories: ['2'],
+        });
+      });
     });
   });
 });

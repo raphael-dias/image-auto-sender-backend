@@ -17,6 +17,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/jest/bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:user": "jest -t UserService - Create - Error",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "seed": "ts-node prisma/seeds.ts"

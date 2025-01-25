@@ -16,10 +16,37 @@ export class UsersController {
   constructor(private readonly userServices: UserService) {}
 
   @Get()
+  @ApiBody({
+    description: 'Retrieve user data by userID',
+    examples: {
+      example1: {
+        summary: 'Return user data',
+        value: {
+          userId: '62860345-4488-42c4-9c8b-4289f4273660',
+          publicKey: '-----BEGIN PUBLIC KEY-----n-----END PUBLIC KEY-----\n',
+          favs: ['1', '2'],
+          categories: ['1'],
+        },
+      },
+    },
+  })
   getUser(@Query('id') id: string): any {
     return this.userServices.getUser(id);
   }
+
   @Get('create')
+  @ApiBody({
+    description: 'Create a new user',
+    examples: {
+      example1: {
+        summary: 'Return user data',
+        value: {
+          userId: '62860345-4488-42c4-9c8b-4289f4273660',
+          publicKey: '-----BEGIN PUBLIC KEY-----/-----END PUBLIC KEY-----\n',
+        },
+      },
+    },
+  })
   createUser() {
     return this.userServices.createUser();
   }
@@ -64,10 +91,5 @@ export class UsersController {
     @Body() updateData: UpdateUserDto,
   ): Promise<any> {
     return this.userServices.updateUserFavsAndCategories(id, updateData);
-  }
-
-  @Get('test')
-  test() {
-    return 'SUCCESS';
   }
 }

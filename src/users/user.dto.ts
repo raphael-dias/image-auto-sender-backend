@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 
 export class UserDto {
-  @IsOptional() // opcional porque é gerado pelo banco
+  @IsOptional()
   @IsInt()
   id?: number;
 
@@ -22,7 +22,7 @@ export class UserDto {
   @IsString()
   private_key: string;
 
-  @IsOptional() // opcional porque é gerado pelo banco
+  @IsOptional()
   @IsDateString()
   created_at?: string;
 
